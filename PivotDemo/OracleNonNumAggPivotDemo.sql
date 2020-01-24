@@ -1,4 +1,11 @@
-﻿/*	
+/*
+
+The data set for this example is very poor and needs to be updated with more relvant data. 
+Will try to update in the near future.
+
+*/
+
+/*	
 --	TABLE
 --	Checks to see if function exists and drops it if it does 
 
