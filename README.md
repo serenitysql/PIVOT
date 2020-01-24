@@ -1,4 +1,4 @@
 # PIVOT
-Repository of Presentations and Demos
+Repository of presentation slide deck and demos
 Oracle
 SQL Server
