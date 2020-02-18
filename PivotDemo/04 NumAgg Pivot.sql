@@ -4,6 +4,11 @@ ORDER BY inDate
 ;
 */
 WITH pvtExample AS
+/*
+Common Table Expression (CTE):
+Specifies a temporary named result set. This is derived from a simple query and defined within the execution scope of a single SELECT, INSERT, UPDATE, DELETE or MERGE statement. \
+Ths can cause slightly more overhead, but can make a query easier to read vs using subqueries.
+*/
 (
 	SELECT
 		petType

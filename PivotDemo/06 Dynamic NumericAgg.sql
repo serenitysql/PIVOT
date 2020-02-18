@@ -1,3 +1,35 @@
+/*BEGIN: Simple Pivot
+	Aggregate using COUNT on animal id
+	Group on each of the different pet types
+	Spread on size 
+*/
+SELECT * FROM
+/*For very simple pivots, using an asteriks in the main query is acceptable. No need to write out every field that will be returned.*/
+(
+SELECT DISTINCT
+	ai.petType
+
+	/*PIVOT*/
+	,ai.AnimalId
+	,CASE WHEN ai.size = 'MED' THEN 'medium' ELSE ai.size END AS size
+FROM
+	dbo.AnimalIntake ai
+WHERE
+	ai.intakeType != 'Return'
+) src
+PIVOT
+(
+	COUNT(AnimalId)
+	FOR size IN(small, medium, large)
+) sizepvt
+/*END: Simple Pivot*/
+;
+
+
+
+
+
+
 /*
 SQL to create dynamic PIVOT queries in SQL Server by Aaron Bertrand
 https://www.mssqltips.com/sqlservertip/2783/script-to-create-dynamic-pivot-queries-in-sql-server/
@@ -15,8 +47,8 @@ DECLARE @columns NVARCHAR(MAX) = N'';
 *** QUOTENAME('character_string' [, 'quote_character'])
 *** Subquery: pulls the value for the column spread
 **/
-SELECT @columns += N', ' + QUOTENAME(breed)
-FROM (SELECT DISTINCT ai.breed
+SELECT @columns += N', ' + QUOTENAME(size)
+FROM (SELECT DISTINCT ai.size /*spreading*/
 	  FROM dbo.AnimalIntake ai
 	 ) col
 ;
@@ -30,22 +62,25 @@ FROM (SELECT DISTINCT ai.breed
 **/
 
 DECLARE @sql NVARCHAR(MAX) = N'
-SELECT size, ' + STUFF(@columns, 1, 2, '') + '
+SELECT	petType /*grouping field*/
+		, ' + STUFF(@columns, 1, 2, '') + '
 FROM
 (
 SELECT
-  ai.size
+	ai.petType /*grouping*/
 
-  /*PIVOT*/
-  ,ai.animalId
-  ,ai.breed
+	/*PIVOT*/
+	,ai.AnimalId
+	,CASE WHEN ai.size = ''MED'' THEN ''medium'' ELSE ai.size END AS size
 FROM
   dbo.AnimalIntake ai
+WHERE
+	ai.intakeType != ''Return''
 ) src
 PIVOT
 (
   COUNT(animalId)
-  FOR breed IN('+ STUFF(REPLACE(@columns, ', [', ',['), 1, 1, '') + ')
+  FOR size IN('+ STUFF(REPLACE(@columns, ', [', ',['), 1, 1, '') + ')
 ) pvt
 ;';
 

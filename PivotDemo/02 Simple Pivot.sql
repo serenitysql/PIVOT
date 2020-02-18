@@ -53,7 +53,9 @@ ORDER BY
 
 	Aggregate using SUM on a case statement
 	Group on each of the different pet types and sizes
-	Spread on size 
+	Spread on size
+
+Windowing Function Definition: A function that's applied to a set of rows defined by a window descriptor and returns a single value for each row from the underlying query. The purpose of the window descriptor is to define the set of rows that the function should apply to.
 */
 SELECT
 	petType
@@ -74,11 +76,14 @@ FROM
 ) src
 GROUP BY
 	petType
+;/*END: Manual Pivot with windowing function*/
+
+
 /*
 	As with all queries, there is more than one way to organize, format, and lay out the syntax.
 	This query could be written using only the subquery and adding "DISTINCT".
 	However, I wrote in a similar syntax to the Manual Pivot without Windowing Function and the Simple Pivot for equal camparison purposes.
-* /
+
 	SELECT DISTINCT
 		ai.petType
 		,SUM(CASE WHEN ai.size = 'SMALL' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS small
@@ -89,7 +94,6 @@ GROUP BY
 	WHERE
 		ai.intakeType != 'Return'
 */
-;/*END: Manual Pivot with windowing function*/
 
 
 
