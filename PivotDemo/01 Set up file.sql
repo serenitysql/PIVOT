@@ -1,10 +1,6 @@
-/*	Check to see if TABLE exists and drops it if it does 
-MAX
-IF OBJECT_ID(N'AnimalIntake',N'U') IS NOT NULL
-	DROP TABLE AnimalIntake
-;
-*/
-
+/*****************************************************************************
+	SET UP TABLE AND INSERT DATA
+*****************************************************************************/
 DROP TABLE IF EXISTS dbo.AnimalIntake
 ;
 CREATE TABLE dbo.AnimalIntake
@@ -138,19 +134,15 @@ VALUES
 ,	(101, 'C448447'	,'RETURN'		,CONVERT(DATE,'5/17/2019')	,'BLARNEY'	,'CAT'	,'9 MOS'		,'SMALL','GRAY / WHITE'	,'DOMESTIC SH'						,'N')
 ,	(102, 'C448448'	,'RETURN'		,CONVERT(DATE,'5/17/2019')	,'SHAMROCK'	,'CAT'	,'9 MOS'		,'SMALL','GRAY / WHITE'	,'DOMESTIC SH'						,'N')
 ,	(103, 'C448499'	,'RETURN'		,CONVERT(DATE,'12/19/2019')	,'WAY'		,'CAT'	,'1 YR 10 MO'	,'SMALL','BRN'			,'TABBY DOMESTIC SH'				,'S')
+; /*end INSERT*/
+
+
+
+/*****************************************************************************
+	SET UP TABLE AND INSERT DATA
+	RETURN DATA IN THE TABLE
+******************************************************************************/
+SELECT * FROM dbo.AnimalIntake
 ;
 
-SELECT
-	intakeID
-	,ai.animalID
-	,ai.intakeType
-	,ai.inDate
-	,ai.petName
-	,ai.petType
-	,ai.age
-	,ai.size
-	,ai.color
-	,ai.breed
-	,ai.gender
-FROM dbo.AnimalIntake ai
-;
+

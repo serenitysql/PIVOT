@@ -1,31 +1,36 @@
-/*
-SELECT * FROM dbo.AnimalIntake
-;
 
---Subtotaled Data
-SELECT petType, size, COUNT(animalID) AS countPets
-FROM dbo.AnimalIntake
-WHERE intakeType != 'Return'
+
+/*****************************************************************************
+	SHOW SUBTOTALED DATA
+*****************************************************************************/
+SELECT	 petType, size, COUNT(animalID) AS countPets
+FROM	 dbo.AnimalIntake
+WHERE	 intakeType != 'Return'
 GROUP BY petType, size
 ORDER BY petType
-*/
+;
 
 
 
-/*BEGIN: Manual Pivot without windowing function
 
+/*****************************************************************************
+	MANUAL PIVOT w/o WINDOWING FUNCTION
+******************************************************************************
 	Aggregate using SUM on a case statement
 	Group on each of the different pet types and sizes
-	Spread on size 
+	Spread on size
+
+	Return number of pet types by size
 */
 SELECT
-	petType
+	size.petType
+
 	/*To condense petTypes to one row each */
-	,MAX(small) AS small
-	,MAX(medium) AS medium
-	,MAX(large) AS large
+	,MAX(size.small) AS small
+	,MAX(size.medium) AS medium
+	,MAX(size.large) AS large
 FROM
-(
+	(
 	SELECT
 		ai.petType
 		,SUM(CASE WHEN ai.size = 'SMALL' THEN 1 ELSE 0 END) AS small
@@ -34,36 +39,40 @@ FROM
 	FROM
 		dbo.AnimalIntake ai
 	WHERE
-		/*Eliminate animals that were returned to get an accurate count of pet sizes*/
+		/*Eliminate animals that were returned to count unique animals and eliminate duplicates*/
 		ai.intakeType != 'Return'
 	GROUP BY
-		/*When aggregates are included in the SELECT clause, non aggregated fields must be grouped*/
 		ai.petType
 		,ai.size
-) src
+	) size
 GROUP BY
-	petType
+	size.petType
 ORDER BY
-	petType
+	size.petType
 ;/*END: Manual Pivot without windowing function*/
 
 
 
-/*BEGIN: Manual Pivot with windowing function 
+/*****************************************************************************
+	MANUAL PIVOT w/ WINDOWING FUNCTION
+******************************************************************************
+Windowing Function Definition: A function that's applied to a set of rows defined by a window descriptor and returns a single value for each row from the underlying query. 
+The purpose of the window descriptor is to define the set of rows that the function should apply to. There is no need to have GROUP BY, but you may need to use DISTINCT.
 
 	Aggregate using SUM on a case statement
 	Group on each of the different pet types and sizes
 	Spread on size
 
-Windowing Function Definition: A function that's applied to a set of rows defined by a window descriptor and returns a single value for each row from the underlying query. The purpose of the window descriptor is to define the set of rows that the function should apply to.
+	Return number of pet types by size
 */
 SELECT
-	petType
-	,MAX(small) AS small
-	,MAX(medium) AS medium
-	,MAX(large) AS large
+	size.petType
+	/*To condense petTypes to one row each */
+	,MAX(size.small) AS small
+	,MAX(size.medium) AS medium
+	,MAX(size.large) AS large
 FROM
-(
+	(
 	SELECT
 		ai.petType
 		,SUM(CASE WHEN ai.size = 'SMALL' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS small
@@ -72,64 +81,104 @@ FROM
 	FROM
 		dbo.AnimalIntake ai
 	WHERE
+		/*Eliminate animals that were returned to count unique animals and eliminate duplicates*/
 		ai.intakeType != 'Return'
-) src
+	) size
 GROUP BY
-	petType
+	size.petType
 ;/*END: Manual Pivot with windowing function*/
 
 
-/*
-	As with all queries, there is more than one way to organize, format, and lay out the syntax.
-	This query could be written using only the subquery and adding "DISTINCT".
-	However, I wrote in a similar syntax to the Manual Pivot without Windowing Function and the Simple Pivot for equal camparison purposes.
 
-	SELECT DISTINCT
-		ai.petType
-		,SUM(CASE WHEN ai.size = 'SMALL' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS small
-		,SUM(CASE WHEN ai.size = 'MED' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS medium
-		,SUM(CASE WHEN ai.size = 'LARGE' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS large
-	FROM
-		dbo.AnimalIntake ai
-	WHERE
-		ai.intakeType != 'Return'
-*/
+/*****************************************************************************
+	MANUAL PIVOT w/ WINDOWING FUNCTION ... Alternate syntax
+******************************************************************************
+The above windowing query could be written using only the subquery and adding "DISTINCT".
 
+	Return number of pet types by size
 
-
-
-/*BEGIN: Simple Pivot
-	Aggregate using COUNT on animal id
-	Group on each of the different pet types
-	Spread on size 
-*/
-SELECT * FROM
-/*For very simple pivots, using an asteriks in the main query is acceptable. No need to write out every field that will be returned.*/
-(
 SELECT DISTINCT
 	ai.petType
-
-	/*PIVOT*/
-	,ai.AnimalId
-	,CASE WHEN ai.size = 'MED' THEN 'medium' ELSE ai.size END AS size
+	,SUM(CASE WHEN ai.size = 'SMALL' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS small
+	,SUM(CASE WHEN ai.size = 'MED' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS medium
+	,SUM(CASE WHEN ai.size = 'LARGE' THEN 1 ELSE 0 END) OVER(PARTITION BY ai.petType) AS large
 FROM
 	dbo.AnimalIntake ai
 WHERE
 	ai.intakeType != 'Return'
+*/
+
+
+
+/*****************************************************************************
+	NUMERICAL aggragate pivot (a.k.a. SUM / COUNT / AVG)
+******************************************************************************
+	Aggregate using COUNT on animal id
+	Group on each of the different pet types
+	Spread on size
+
+	Return number of pet types by size
+
+For very simple pivots, using an asteriks in the main query is acceptable. 
+No need to write out every field that will be returned, because the fields to be returned are already limited.
+*/
+SELECT * FROM
+(
+	SELECT DISTINCT
+		ai.petType
+
+		/*PIVOT*/
+		,ai.AnimalId
+		,ai.size 
+	FROM
+		dbo.AnimalIntake ai
+	WHERE
+		ai.intakeType != 'Return'
 ) src
 PIVOT
 (
 	COUNT(AnimalId)
-	FOR size IN(small, medium, large)
+	FOR size IN(Small, Medium, Large)
+	/*even though the data in the size field for Medium is actually MED, seems like SQL Svr knows what is being referred to*/
 ) sizepvt
-;/*END: Simple Pivot*/
+;/*END: Simple numerical aggegrate Pivot*/
 
+
+
+/*****************************************************************************
+	NON NUMERICAL aggragate pivot (a.k.a. MIN / MAX)
+******************************************************************************
+	Aggregate using MAX on inDate
+	Group on each of the different petType
+	Spread on intakeType
+
+	Return number of pet types by size
+
+	Since we want to see the latest date for an intake date per size, no need to eliminate animals that were returned
+*/
+SELECT * FROM
+(
+	SELECT
+		ai.petType
+
+		/*PIVOT*/
+		,ai.inDate
+		,ai.intakeType
+	FROM
+		dbo.AnimalIntake ai
+) src
+PIVOT
+(
+	MAX(inDate)
+	FOR intakeType IN(confiscate,[owner surrender],stray,returned)
+	/*square brackes [ ] MUST be used if the customer will not be persuaded to not use spaces or special characters other than underscore in the result output*/
+) AS pvt
+;/*END: BASIC NON NUMERICAL AGGRAGATE PIVOT (a.k.a. MIN / MAX)*/
 
 
 
 /*MySQL
-I need to investigate more, but I don't think MySQL has a pivot operator
-
+This has not been tested but the interwebs say this is what the syntax is for MySQL:
 
 SELECT DISTINCT
 	ai.petType
